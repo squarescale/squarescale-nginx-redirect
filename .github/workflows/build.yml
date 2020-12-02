@@ -1,0 +1,35 @@
+name: "Build docker container"
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2.3.2
+        with:
+          submodules: true
+
+      - name: Build and push Docker images
+        uses: docker/build-push-action@v1.1.0
+        with:
+          username: ${{ secrets.DOCKER_USER }}
+          password: ${{ secrets.DOCKER_TOKEN }}
+          repository: squarescale/squarescale-nginx-redirect
+          tags: latest
+          tag_with_ref: true
+          tag_with_sha: true
+
+      - name: Deploy 🚀 on Squarescale
+        uses: squarescale/squarescale-cli@master
+        with:
+          args: service schedule --project-name ${SQSC_PROJECT_NAME} ${SQSC_SERVICE_NAME}
+        env:
+          SQSC_TOKEN: ${{ secrets.SQSC_TOKEN }}
+          SQSC_PROJECT_NAME: ${{ secrets.SQSC_PROJECT_NAME }}
+          SQSC_SERVICE_NAME: ${{ secrets.SQSC_SERVICE_NAME }}
